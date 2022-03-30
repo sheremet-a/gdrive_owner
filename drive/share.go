@@ -17,23 +17,27 @@ type ShareArgs struct {
 	Discoverable bool
 }
 
-func (self *Drive) Share(args ShareArgs) error {
-	permission := &drive.Permission{
-		AllowFileDiscovery: args.Discoverable,
-		Role:               args.Role,
-		Type:               args.Type,
-		EmailAddress:       args.Email,
-		Domain:             args.Domain,
-	}
-
-	_, err := self.service.Permissions.Create(args.FileId, permission).Do()
-	if err != nil {
-		return fmt.Errorf("Failed to share file: %s", err)
-	}
-
-	fmt.Fprintf(args.Out, "Granted %s permission to %s\n", args.Role, args.Type)
-	return nil
-}
+func (self *Drive) Share(args ShareArgs) error {                                                                                                     
+    permission := &drive.Permission{                                                                                                                 
+        AllowFileDiscovery: args.Discoverable,                                                                                                       
+        Role:               args.Role,                                                                                                               
+        Type:               args.Type,                                                                                                               
+        EmailAddress:       args.Email,                                                                                                              
+    }                                                                                                                                                
+                                                                                                                                                     
+    call := self.service.Permissions.Create(args.FileId, permission)                                                                                 
+    if permission.Role == "owner" {                                                                                                                  
+        call.TransferOwnership(true)                                                                                                                 
+    }                                                                                                                                                
+                                                                                                                                                     
+    _, err := call.Do()                                                                                                                              
+    if err != nil {                                                                                                                                  
+        return fmt.Errorf("Failed to share file: %s", err)                                                                                           
+    }                                                                                                                                                
+                                                                                                                                                     
+    fmt.Fprintf(args.Out, "Granted %s permission to %s\n", args.Role, args.Type)                                                                     
+    return nil                                                                                                                                       
+} 
 
 type RevokePermissionArgs struct {
 	Out          io.Writer
